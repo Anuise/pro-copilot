@@ -69,6 +69,17 @@ For multi-step tasks, state a brief plan:
 
 Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
 
+## 5. 運行與測試環境規則 (Environment & Testing Rules)
+
+**一律在 Docker Compose 容器內運行服務，嚴禁在宿主機直接啟動伺服器：**
+
+- **嚴禁在宿主機（Host）上執行**：像是 `uvicorn`、`next dev`、`npm run dev`、`python main.py` 等會佔用埠口（如 3000, 8000）的伺服器啟動命令。
+- **統一使用 Docker Compose 進行生命週期管理**：
+  - 啟動與重新啟動伺服器：請使用 `docker compose up -d` 或 `docker compose restart [service_name]`。
+  - 重建並啟動服務：`docker compose up -d --build [service_name]`。
+  - 停止服務：`docker compose down`。
+- **測試環境依賴**：任何端對端測試（如 Playwright E2E 測試）或 API 驗證，其對應的伺服器（Target Server）必須是由 Docker 容器所運行的實例，而非宿主機啟動的本機實例。
+
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.
