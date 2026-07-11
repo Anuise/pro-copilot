@@ -6,6 +6,7 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     # API Keys
     openai_api_key: str = ""
+    gemini_api_key: str = ""
 
     # GitLab
     gitlab_webhook_secret: str = ""

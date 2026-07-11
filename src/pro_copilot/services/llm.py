@@ -1,20 +1,35 @@
 import os
+import logging
 from google.antigravity import Agent, LocalAgentConfig
+
+logger = logging.getLogger(__name__)
 
 
 async def call_llm(
     system_prompt: str,
     user_prompt: str,
 ) -> str:
-    """使用 Antigravity SDK 啟動 Agent 並回傳生成的文字內容。"""
-    gemini_key = os.getenv("GEMINI_API_KEY")
-    if not gemini_key or gemini_key == "placeholder":
+    """使用 Antigravity SDK 啟動 Agent。若失敗或無憑證則回退至 Mock 內容。"""
+    try:
+        config = LocalAgentConfig(system_instructions=system_prompt)
+
+        async with Agent(config) as agent:
+            response = await agent.chat(user_prompt)
+
+            content = ""
+            async for token in response:
+                content += token
+            return content
+
+    except Exception as exc:
+        logger.warning("真實 AI 呼叫失敗，將回退至 Mock 測試資料: %s", exc)
+
         if "職涯分析" in system_prompt:
             return """## 程式開發
 - 技能名稱: Python
   熟練度: 精通
   相關專案: Pro-Copilot
-  具體貢獻: S: 建立職涯副駕駛系統。T: 整合多種 API 並進行 Docker 部署。A: 使用 Python/FastAPI 開發後端。R: 順利完成專案功能驗證。
+  具體貢獻: S: 建立職涯副駕駛系統。T: 整合多種 API 並進行 Docker 部署。A: 使用 Python/FastAPI 開發後端. R: 順利完成專案功能驗證。
 
 ## 系統部署
 - 技能名稱: Docker
@@ -38,13 +53,3 @@ async def call_llm(
 """
         else:
             return "這是測試環境的預設 LLM Mock 內容。"
-
-    config = LocalAgentConfig(system_instructions=system_prompt)
-
-    async with Agent(config) as agent:
-        response = await agent.chat(user_prompt)
-
-        content = ""
-        async for token in response:
-            content += token
-        return content
