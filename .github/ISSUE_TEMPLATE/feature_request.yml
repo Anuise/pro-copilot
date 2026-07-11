@@ -61,6 +61,18 @@ body:
         - label: 公開 API 或向後相容性
         - label: 新增長期運行服務或外部依賴
   - type: textarea
+    id: impact_analysis
+    attributes:
+      label: 影響分析
+      description: 請分別說明隱私、安全、資料遷移與相容性為「有／無／不確定」，並提供理由。
+      placeholder: |
+        隱私：無，理由是…
+        安全：不確定，需要確認…
+        資料遷移：有，需要…
+        相容性：無，理由是…
+    validations:
+      required: true
+  - type: textarea
     id: additional
     attributes:
       label: 補充資訊

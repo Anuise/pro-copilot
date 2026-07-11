@@ -18,7 +18,8 @@ RFC 不另建工作流程狀態。撰寫、審查與完成階段一律使用 Git
 3. 在 RFC 與 Feature Request 互相連結。
 4. RFC 完整後將 GitHub Project `Status` 改為 `Review`，`Decision` 保持 `Pending`。
 5. 維護者記錄 `Accepted` 或 `Rejected` 決策及理由。
-6. `Accepted` RFC 拆分實作 Issues；功能發布後補上 release 連結。
+6. RFC 做出 `Accepted`、`Rejected` 或 `Superseded` 決策並記錄理由後，RFC 文件 item 移至 `Done`。
+7. `Accepted` RFC 拆分實作 Issues；對應功能 item 仍須正式發布後才能移至 `Done`，發布後補上 release 連結。
 
 ## 範本
 

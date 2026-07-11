@@ -7,6 +7,7 @@
 - 錯誤請使用 Bug Report。
 - 新功能或行為變更請使用 Feature Request。
 - 不要在公開 Issue、Pull Request 或日誌貼上 API key、token、履歷內容、語音內容或其他個人資料。
+- 安全漏洞請依 [`SECURITY.md`](../SECURITY.md) 使用 GitHub Private Vulnerability Reporting 私下回報。
 - 實作前先確認 Issue 已完成 triage；大型或高風險功能需先核准 RFC。
 
 ## 需求生命週期
@@ -64,4 +65,4 @@ GitHub Project 的 `Status` 是唯一工作流程狀態來源。Labels 只用於
 - 使用者文件、設定範例與 migration 已同步。
 - 相容性、安全與隱私影響已處理。
 - 使用者可見變更已加入 `CHANGELOG.md` 的 `Unreleased`。
-- 只有進入正式 release 後，Project item 才能移至 `Done`。
+- 功能 item 只有進入正式 release 後才能移至 `Done`；RFC 文件 item 依 RFC 規範完成決策後可移至 `Done`。
