@@ -6,7 +6,7 @@
 
 - Closes #
 - RFC：不適用 / `docs/rfcs/NNNN-short-title.md`
-- Roadmap：Now / Next / Later / 不適用
+- Roadmap item：Issue／Project 連結或 Not linked
 
 ## 驗證證據
 
