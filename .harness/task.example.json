@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "task": {
+    "id": "replace-with-task-id",
+    "summary": "用一句話描述預期成果"
+  },
+  "phase": "intake",
+  "phase_history": ["intake"],
+  "requirements": {
+    "request": "保留使用者原始需求",
+    "assumptions": [],
+    "success_criteria": [],
+    "constraints": [],
+    "out_of_scope": []
+  },
+  "design": {
+    "approach": "",
+    "alternatives": [],
+    "risks": []
+  },
+  "plan": [],
+  "changes": {
+    "files": [],
+    "summary": ""
+  },
+  "verification": [],
+  "review": {
+    "status": "pending",
+    "notes": ""
+  },
+  "open_items": []
+}

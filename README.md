@@ -70,6 +70,7 @@ pro-copilot/
 
 ## 專案規劃與貢獻
 
+- [AI 開發 Harness](HARNESS.md)：供不同 AI 工具共同遵循的標準開發與驗證協定。
 - [Roadmap](ROADMAP.md)：目前、下一步與長期產品方向。
 - [貢獻指南](docs/CONTRIBUTING.md)：Issue、GitHub Project、開發與驗收流程。
 - [RFC 規範](docs/rfcs/README.md)：大型或高風險功能的設計流程。

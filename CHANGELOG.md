@@ -6,6 +6,7 @@
 
 ### Added
 
+- 新增工具中立的 AI 開發 harness、結構化工作狀態契約與驗證 CLI。
 - 建立公開 roadmap 與 GitHub 需求追蹤流程。
 
 ### Changed

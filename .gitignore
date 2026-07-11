@@ -12,6 +12,11 @@ build/
 # Git worktrees
 .worktrees/
 
+# AI harness runtime state（保留公開契約與範例）
+.harness/*.json
+!.harness/schema.json
+!.harness/task.example.json
+
 # 環境變數
 .env
 
