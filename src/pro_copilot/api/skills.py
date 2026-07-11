@@ -84,3 +84,15 @@ async def get_activity_logs():
     # 排序：越新越前面
     logs.sort(key=lambda x: x["time"], reverse=True)
     return logs[:20]
+
+
+@router.post("/distill")
+async def trigger_distill():
+    """手動觸發每週蒸餾服務。"""
+    from pro_copilot.services.distiller import run_weekly_distillation
+    try:
+        await run_weekly_distillation()
+        return {"status": "success", "message": "每週蒸餾執行成功"}
+    except Exception as exc:
+        logger.error("手動執行每週蒸餾失敗: %s", exc)
+        raise HTTPException(status_code=500, detail=f"蒸餾執行失敗: {exc}")
