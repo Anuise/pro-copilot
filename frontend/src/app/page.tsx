@@ -86,6 +86,7 @@ export default function Home() {
 
   // UX / UI States
   const [syncingVector, setSyncingVector] = useState(false);
+  const [distilling, setDistilling] = useState(false);
   const [generatingCV, setGeneratingCV] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
@@ -162,6 +163,25 @@ export default function Home() {
       alert("❌ 無法連線至後端 API。");
     } finally {
       setSyncingVector(false);
+    }
+  };
+
+  // 手動蒸餾工作足跡事件
+  const handleDistillData = async () => {
+    setDistilling(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/skills/distill`, { method: "POST" });
+      if (res.ok) {
+        alert("🎉 技能蒸餾成功！已成功分析最新日誌並更新 Wiki 庫。");
+        fetchData();
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        alert(`❌ 蒸餾失敗: ${errData.detail || "請檢查後端日誌。"}`);
+      }
+    } catch {
+      alert("❌ 無法連線至後端 API。");
+    } finally {
+      setDistilling(false);
     }
   };
 
@@ -533,14 +553,24 @@ export default function Home() {
                   <h2 className="text-xl font-bold text-white">技能 Wiki 庫</h2>
                   <p className="text-xs text-gray-400 mt-1">來自 Obsidian vault 且已轉換為向量嵌入的技能卡片</p>
                 </div>
-                <button
-                  onClick={handleSyncVector}
-                  disabled={syncingVector}
-                  className="flex items-center space-x-2 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 hover:bg-indigo-500/20 text-xs px-3.5 py-2 rounded-xl transition-all"
-                >
-                  <RefreshCw className={`h-3.5 w-3.5 ${syncingVector ? "animate-spin" : ""}`} />
-                  <span>{syncingVector ? "同步中..." : "重新同步向量庫"}</span>
-                </button>
+                <div className="flex space-x-3">
+                  <button
+                    onClick={handleDistillData}
+                    disabled={distilling}
+                    className="flex items-center space-x-2 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 text-xs px-3.5 py-2 rounded-xl transition-all"
+                  >
+                    <Cpu className={`h-3.5 w-3.5 ${distilling ? "animate-spin" : ""}`} />
+                    <span>{distilling ? "蒸餾中..." : "手動蒸餾工作足跡"}</span>
+                  </button>
+                  <button
+                    onClick={handleSyncVector}
+                    disabled={syncingVector}
+                    className="flex items-center space-x-2 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 hover:bg-indigo-500/20 text-xs px-3.5 py-2 rounded-xl transition-all"
+                  >
+                    <RefreshCw className={`h-3.5 w-3.5 ${syncingVector ? "animate-spin" : ""}`} />
+                    <span>{syncingVector ? "同步中..." : "重新同步向量庫"}</span>
+                  </button>
+                </div>
               </div>
 
               {skills.length === 0 ? (
