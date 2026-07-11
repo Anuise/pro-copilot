@@ -94,5 +94,5 @@ async def trigger_distill():
         await run_weekly_distillation()
         return {"status": "success", "message": "每週蒸餾執行成功"}
     except Exception as exc:
-        logger.error("手動執行每週蒸餾失敗: %s", exc)
+        logger.error("手動執行每週蒸餾失敗: %s", exc, exc_info=True)
         raise HTTPException(status_code=500, detail=f"蒸餾執行失敗: {exc}")

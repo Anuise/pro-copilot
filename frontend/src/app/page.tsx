@@ -556,7 +556,7 @@ export default function Home() {
                 <div className="flex space-x-3">
                   <button
                     onClick={handleDistillData}
-                    disabled={distilling}
+                    disabled={distilling || syncingVector}
                     className="flex items-center space-x-2 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 text-xs px-3.5 py-2 rounded-xl transition-all"
                   >
                     <Cpu className={`h-3.5 w-3.5 ${distilling ? "animate-spin" : ""}`} />
@@ -564,7 +564,7 @@ export default function Home() {
                   </button>
                   <button
                     onClick={handleSyncVector}
-                    disabled={syncingVector}
+                    disabled={syncingVector || distilling}
                     className="flex items-center space-x-2 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 hover:bg-indigo-500/20 text-xs px-3.5 py-2 rounded-xl transition-all"
                   >
                     <RefreshCw className={`h-3.5 w-3.5 ${syncingVector ? "animate-spin" : ""}`} />

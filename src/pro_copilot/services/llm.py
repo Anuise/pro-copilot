@@ -1,6 +1,7 @@
 import os
 import logging
 from google.antigravity import Agent, LocalAgentConfig
+from pro_copilot.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -11,7 +12,10 @@ async def call_llm(
 ) -> str:
     """使用 Antigravity SDK 啟動 Agent。若失敗或無憑證則回退至 Mock 內容。"""
     try:
-        config = LocalAgentConfig(system_instructions=system_prompt)
+        config = LocalAgentConfig(
+            api_key=settings.gemini_api_key,
+            system_instructions=system_prompt
+        )
 
         async with Agent(config) as agent:
             response = await agent.chat(user_prompt)

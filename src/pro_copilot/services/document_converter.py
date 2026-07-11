@@ -79,6 +79,40 @@ async def run_document_conversion() -> None:
             logger.error("轉換檔案 %s 失敗: %s", file_path.name, e, exc_info=True)
 
 
+def _clean_spaced_out_text(text: str) -> str:
+    """清理 PDF 提取文字時常見的字元間隔多餘空格問題。"""
+    import re
+    cleaned_lines = []
+    for line in text.splitlines():
+        # 以多於一個空格（兩個或以上）來切分單字/片語組
+        words = re.split(r' {2,}', line.strip())
+        cleaned_words = []
+        for word in words:
+            non_space_chars = [c for c in word if c != ' ']
+            if not non_space_chars:
+                continue
+            # 若單字長度大於 1 且剛好是 (非空格字元數 * 2 - 1)，檢查是否為交替空格字元（如 "P y t h o n"）
+            if len(word) > 1 and len(word) == 2 * len(non_space_chars) - 1:
+                is_spaced_out = True
+                for idx, char in enumerate(word):
+                    if idx % 2 == 0:
+                        if char == ' ':
+                            is_spaced_out = False
+                            break
+                    else:
+                        if char != ' ':
+                            is_spaced_out = False
+                            break
+                if is_spaced_out:
+                    cleaned_words.append("".join(non_space_chars))
+                else:
+                    cleaned_words.append(word)
+            else:
+                cleaned_words.append(word)
+        cleaned_lines.append(" ".join(cleaned_words))
+    return "\n".join(cleaned_lines)
+
+
 def _parse_pdf(file_path: Path) -> str:
     """解析 PDF 檔案提取純文字。"""
     from pypdf import PdfReader
@@ -88,8 +122,9 @@ def _parse_pdf(file_path: Path) -> str:
     for i, page in enumerate(reader.pages, 1):
         page_text = page.extract_text()
         if page_text and page_text.strip():
+            cleaned_text = _clean_spaced_out_text(page_text)
             text_parts.append(f"## Page {i}\n")
-            text_parts.append(page_text.strip())
+            text_parts.append(cleaned_text.strip())
             text_parts.append("")
             
     return "\n".join(text_parts)
