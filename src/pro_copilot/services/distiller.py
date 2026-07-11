@@ -1,5 +1,6 @@
 import json
 import logging
+import re
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -15,14 +16,49 @@ SYSTEM_PROMPT = """\
 1. 過濾雜訊，僅保留與技能、貢獻相關的內容
 2. 提取技能與貢獻，使用 STAR 格式（情境、任務、行動、結果）
 3. 根據現有技能檔案，判斷需要更新或新增哪些技能頁面
-4. 輸出結構化的 Markdown 格式
+4. 輸出結構化的 Markdown 格式，並且不要包含任何 YAML frontmatter (程式會自動處理)
 
-輸出格式要求：
-- 每個技能類別用 ## 標題
-- 標記 [更新] 或 [新增] 表示該技能頁面的操作類型
-- 每個技能項目包含：技能名稱、熟練度、相關專案、具體貢獻（STAR 格式）
-- 全部使用繁體中文
+對於每一個技能項目，你必須嚴格遵守以下輸出格式模板：
+
+## [操作類型] 技能名稱
+（操作類型為 [新增] 或 [更新]）
+
+## 技能說明
+- **核心描述**：[簡述此技能的專業定義與主要應用場景]
+- **熟練程度**：[精通 / 熟練 / 熟悉 / 基礎]
+- **核心技術**：[技術 A, 技術 B, 技術 C]
+
+## 實際專案紀錄
+
+### [專案名稱]
+- **情境 (Situation)**：[情境說明]
+- **任務 (Task)**：[任務說明]
+- **行動 (Action)**：[行動說明]
+- **結果 (Result)**：[結果說明]
+
+規範限制：
+- 如果該技能是 [更新]，你必須閱讀「現有技能檔案」中對應的內容，將既有的歷史專案紀錄完整保留，並將新專案以相同的 STAR 格式追加在「## 實際專案紀錄」底下。你可以根據新的工作表現，重新調整「## 技能說明」中的核心描述、熟練程度與核心技術標籤。
+- 全部使用繁體中文。
 """
+
+
+def _extract_frontmatter(content: str) -> str:
+    """從 Markdown 內容中提取 YAML frontmatter。如果沒有則回傳空字串。"""
+    if not content.startswith("---"):
+        return ""
+    lines = content.splitlines(keepends=True)
+    if not lines or not lines[0].startswith("---"):
+        return ""
+    
+    end_idx = -1
+    for i in range(1, len(lines)):
+        if lines[i].startswith("---"):
+            end_idx = i
+            break
+            
+    if end_idx != -1:
+        return "".join(lines[:end_idx + 1])
+    return ""
 
 
 async def run_weekly_distillation() -> None:
@@ -72,9 +108,20 @@ async def run_weekly_distillation() -> None:
 
         if filepath.exists() and is_update:
             existing = filepath.read_text(encoding="utf-8")
-            # 在現有內容後附加新內容
-            updated = existing.rstrip() + f"\n\n## 更新 ({now_str})\n\n" + body
-            filepath.write_text(updated, encoding="utf-8")
+            frontmatter = _extract_frontmatter(existing)
+            if not frontmatter:
+                frontmatter = "\n".join(
+                    [
+                        "---",
+                        f"title: {title}",
+                        f"tags: [技能, {title}]",
+                        f"created_at: {now_str}",
+                        "---",
+                        "",
+                    ]
+                )
+            # 直接用原來的 frontmatter 加上 LLM 輸出的最新完整 body (body 開頭是 ## 技能說明...)
+            filepath.write_text(frontmatter + body, encoding="utf-8")
             updated_count += 1
         else:
             frontmatter = "\n".join(
@@ -143,7 +190,7 @@ def _parse_sections(text: str) -> list[tuple[str, str, bool]]:
     is_update = False
 
     for line in text.splitlines():
-        if line.startswith("## "):
+        if line.startswith("## ") and ("[新增]" in line or "[更新]" in line):
             if current_title:
                 sections.append(
                     (current_title, "\n".join(current_lines), is_update)
