@@ -3,7 +3,7 @@ description: 回報可重現的錯誤、回歸或非預期行為
 title: "[Bug]: "
 labels:
   - "type:bug"
-  - "status:needs-triage"
+  - "attention:triage"
 body:
   - type: markdown
     attributes:

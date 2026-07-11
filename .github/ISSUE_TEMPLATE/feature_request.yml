@@ -3,7 +3,7 @@ description: 提議能解決明確使用者問題的新功能或改善
 title: "[Feature]: "
 labels:
   - "type:feature"
-  - "status:needs-triage"
+  - "attention:triage"
 body:
   - type: markdown
     attributes:
