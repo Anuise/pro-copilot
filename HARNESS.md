@@ -58,6 +58,7 @@ docker compose run --rm --no-deps app uv run python scripts/harness.py init .har
 
 - 先執行最小受影響測試，再執行合理範圍的完整驗證。
 - 服務、API 與 E2E 目標一律由 Docker Compose 啟動，不在宿主機啟動伺服器。
+- **強制視覺化驗證**：所有新增功能在完成開發後，必須使用 **Playwright MCP Server**（透過 MCP 工具在瀏覽器中進行互動式視覺化驗證），確認前端頁面的渲染結果符合預期。不得以「前端未修改」為由跳過此步驟——只要後端資料結構或 API 回傳格式有變更，都必須透過 Playwright MCP 驗證前端是否正確呈現。
 - 每次實際執行結果依時間順序附加至 `verification`，只允許 `pass`、`fail`、`not_run`；不得把預期結果記為實際證據。
 - 失敗時不得進入 `review`，應修正根因或轉為 `blocked`。
 
