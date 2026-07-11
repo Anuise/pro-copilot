@@ -22,6 +22,10 @@ class Settings(BaseSettings):
     vault_dir: Path = Path("./vault")
     jobs_dir: Path = Path("./jobs")
 
+    # Database & Vector DB
+    qdrant_url: str = "http://localhost:6333"
+    database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/pro_copilot"
+
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
 
 

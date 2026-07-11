@@ -41,5 +41,15 @@ def distill():
     click.echo("✅ 每週蒸餾完成。")
 
 
+@main.command()
+def convert():
+    """手動將 raw_logs/incoming/ 下的 Office/PDF 文件轉換為 Markdown。"""
+    from pro_copilot.services.document_converter import run_document_conversion
+
+    click.echo("⏳ 正在執行文件格式轉換…")
+    asyncio.run(run_document_conversion())
+    click.echo("✅ 文件轉換完成。")
+
+
 if __name__ == "__main__":
     main()

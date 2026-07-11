@@ -1,8 +1,11 @@
 import logging
 from pathlib import Path
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from pro_copilot.config import settings
 from pro_copilot.services.llm import call_llm
+from pro_copilot.services.vector_service import search_relevant_skills
+from pro_copilot.models import CVHistory
 
 logger = logging.getLogger(__name__)
 
@@ -21,17 +24,38 @@ SYSTEM_PROMPT = """\
 """
 
 
-async def generate_cv(jd_path: str | Path) -> str:
+async def generate_cv(
+    jd_content_or_path: str | Path,
+    jd_title: str | None = None,
+    db: AsyncSession | None = None
+) -> str:
     """根據 JD 和技能庫生成量身打造的履歷。
 
-    回傳輸出 CV 檔案的路徑字串。
+    回傳生成的履歷內容（Markdown 格式）。
     """
-    jd_path = Path(jd_path)
-    jd_content = jd_path.read_text(encoding="utf-8")
+    if isinstance(jd_content_or_path, Path) or (isinstance(jd_content_or_path, str) and Path(jd_content_or_path).exists()):
+        jd_path = Path(jd_content_or_path)
+        jd_content = jd_path.read_text(encoding="utf-8")
+        if not jd_title:
+            jd_title = jd_path.stem
+    else:
+        jd_content = str(jd_content_or_path)
+        if not jd_title:
+            jd_title = "未命名職缺"
 
-    # 讀取所有技能檔案
-    skills_dir: Path = settings.vault_dir / "skills"
-    skills_content = _read_all_skills(skills_dir)
+    # 使用 Qdrant 檢索最相關的技能
+    logger.info("正在透過 Qdrant 檢索與 JD 相關的技能...")
+    relevant_skills = await search_relevant_skills(jd_content, limit=5)
+    
+    if relevant_skills:
+        skills_content = "\n\n---\n\n".join(
+            [f"### {s['title']}\n\n{s['content']}" for s in relevant_skills]
+        )
+        logger.info("檢索到 %d 個相關技能。", len(relevant_skills))
+    else:
+        logger.warning("未檢索到相關技能，回退至讀取全部技能檔案...")
+        skills_dir: Path = settings.vault_dir / "skills"
+        skills_content = _read_all_skills(skills_dir)
 
     user_prompt = (
         "## 職缺描述（JD）\n\n"
@@ -40,18 +64,37 @@ async def generate_cv(jd_path: str | Path) -> str:
         + skills_content
     )
 
-    logger.info("正在根據 JD '%s' 生成履歷...", jd_path.name)
+    logger.info("正在根據 JD '%s' 生成履歷...", jd_title)
     result = await call_llm(SYSTEM_PROMPT, user_prompt)
 
-    # 輸出至 jobs 目錄
+    # 輸出至 jobs 目錄（保留本地檔案以相容舊有 CLI）
     jobs_dir: Path = settings.jobs_dir
     jobs_dir.mkdir(parents=True, exist_ok=True)
-    output_filename = f"{jd_path.stem}-CV.md"
+    
+    import re
+    slug_title = re.sub(r"[^\w\s-]", "", jd_title)
+    slug_title = re.sub(r"[\s]+", "_", slug_title.strip()).lower()
+    output_filename = f"{slug_title}-CV.md"
     output_path = jobs_dir / output_filename
 
     output_path.write_text(result, encoding="utf-8")
-    logger.info("履歷已生成: %s", output_path)
-    return str(output_path)
+    logger.info("履歷已同步寫入本地檔案: %s", output_path)
+
+    # 如果有資料庫連線，寫入資料庫
+    if db:
+        try:
+            cv_hist = CVHistory(
+                jd_title=jd_title,
+                jd_content=jd_content,
+                generated_cv=result
+            )
+            db.add(cv_hist)
+            await db.commit()
+            logger.info("已將履歷生成歷史寫入 PostgreSQL 中。")
+        except Exception as exc:
+            logger.error("無法寫入履歷歷史至 PostgreSQL: %s", exc)
+
+    return result
 
 
 def _read_all_skills(skills_dir: Path) -> str:

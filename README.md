@@ -35,6 +35,12 @@ uv run pro-copilot init
 
 # 根據目標職缺 JD 生成客製履歷
 uv run pro-copilot generate --jd ./jobs/target-JD.md
+
+# 手動將 raw_logs/incoming/ 底下的 Office/PDF 文件轉換成 Markdown
+uv run pro-copilot convert
+
+# 手動執行每週蒸餾（會自動先呼叫 convert 轉換新文件，再進行 AI 分析）
+uv run pro-copilot distill
 ```
 
 ## 目錄結構
@@ -45,6 +51,9 @@ pro-copilot/
 │   ├── api/                # FastAPI 路由
 │   └── services/           # 商業邏輯
 ├── raw_logs/               # 原始工作日誌（Git 忽略）
+│   ├── incoming/           # 待轉換的原始 Office (docx/pptx/xlsx) 與 PDF 文件
+│   │   └── archive/        # 轉換成功後自動移入的封存區
+│   ├── documents/          # Office/PDF 轉換出的 Markdown 檔案
 │   ├── gitlab/             # GitLab webhook 資料
 │   ├── calendar/           # Google Calendar 事件
 │   └── voice/              # Telegram 語音轉文字

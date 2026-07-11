@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from pro_copilot.config import settings
+from pro_copilot.services.document_converter import run_document_conversion
 from pro_copilot.services.llm import call_llm
 
 logger = logging.getLogger(__name__)
@@ -26,6 +27,12 @@ SYSTEM_PROMPT = """\
 
 async def run_weekly_distillation() -> None:
     """掃描過去 7 天的原始記錄，透過 LLM 蒸餾為技能更新。"""
+    # 先執行文件格式轉換
+    try:
+        await run_document_conversion()
+    except Exception as exc:
+        logger.error("自動執行文件轉換失敗: %s", exc, exc_info=True)
+
     raw_logs_dir: Path = settings.raw_logs_dir
     cutoff = datetime.now(timezone.utc) - timedelta(days=7)
 
@@ -92,7 +99,7 @@ async def run_weekly_distillation() -> None:
 
 def _collect_recent_logs(raw_logs_dir: Path, cutoff: datetime) -> list[str]:
     """收集指定目錄下近期修改的記錄檔案。"""
-    patterns = ["gitlab/*.json", "calendar/*.md", "voice/*.md"]
+    patterns = ["gitlab/*.json", "calendar/*.md", "voice/*.md", "documents/*.md"]
     logs: list[str] = []
 
     for pattern in patterns:
