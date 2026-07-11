@@ -1,0 +1,14 @@
+services:
+  app:
+    build: .
+    container_name: pro-copilot
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    volumes:
+      - ./raw_logs:/app/raw_logs
+      - ./init:/app/init
+      - ./vault:/app/vault
+      - ./jobs:/app/jobs
+    restart: unless-stopped

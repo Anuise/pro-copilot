@@ -1,0 +1,31 @@
+[project]
+name = "pro-copilot"
+version = "1.0.0"
+description = "AI 職涯副駕駛 - 自動蒸餾工作足跡為 Obsidian 技能 wiki 並生成客製履歷"
+requires-python = ">=3.14"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.34",
+    "pydantic-settings>=2.9",
+    "httpx>=0.28",
+    "google-antigravity>=1.0",
+    "openai>=1.82",
+    "python-telegram-bot>=22",
+    "google-api-python-client>=2.172",
+    "google-auth-httplib2>=0.2",
+    "google-auth-oauthlib>=1.2",
+    "apscheduler>=3.11",
+    "click>=8.1",
+    "python-dotenv>=1.1",
+    "python-multipart>=0.0.20",
+]
+
+[project.scripts]
+pro-copilot = "pro_copilot.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/pro_copilot"]

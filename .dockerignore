@@ -1,0 +1,11 @@
+.git
+.env
+__pycache__
+*.pyc
+.venv
+.uv
+raw_logs
+init
+vault
+jobs
+*.egg-info

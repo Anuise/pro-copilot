@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.pyc
+*.egg-info/
+dist/
+build/
+
+# 虛擬環境
+.venv/
+.uv/
+
+# 環境變數
+.env
+
+# 資料目錄（保留 .gitkeep）
+raw_logs/**/*
+!raw_logs/**/.gitkeep
+
+# Google OAuth 憑證
+credentials.json
+token.json
