@@ -68,6 +68,15 @@ pro-copilot/
 └── .env.example            # 環境變數範本
 ```
 
+## 專案規劃與貢獻
+
+- [Roadmap](ROADMAP.md)：目前、下一步與長期產品方向。
+- [貢獻指南](docs/CONTRIBUTING.md)：Issue、GitHub Project、開發與驗收流程。
+- [RFC 規範](docs/rfcs/README.md)：大型或高風險功能的設計流程。
+- [Changelog](CHANGELOG.md)：已發布與尚未發布的使用者可見變更。
+
+新功能請透過 GitHub Feature Request 提出；提交前請先確認是否需要 RFC。
+
 ## 授權
 
 詳見 [LICENSE](LICENSE) 檔案。
