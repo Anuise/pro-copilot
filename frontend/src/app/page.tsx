@@ -19,8 +19,29 @@ import {
   TrendingUp,
   Cpu,
   Loader2,
-  AlertCircle
+  AlertCircle,
+  Edit2,
+  Plus,
+  Trash2,
+  Save
 } from "lucide-react";
+
+// LinkedIn 圖示 SVG 元件
+const LinkedInIcon = ({ className }: { className?: string }) => (
+  <svg
+    className={className}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" />
+    <rect width="4" height="12" x="2" y="9" />
+    <circle cx="4" cy="4" r="2" />
+  </svg>
+);
 
 // 簡易的 Markdown 渲染器元件，用來在 UI 上呈現漂亮的排版
 const MarkdownRenderer = ({ content }: { content: string }) => {
@@ -73,7 +94,7 @@ const MarkdownRenderer = ({ content }: { content: string }) => {
 };
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<"dashboard" | "skills" | "cv" | "logs">("dashboard");
+  const [activeTab, setActiveTab] = useState<"dashboard" | "skills" | "cv" | "logs" | "linkedin">("dashboard");
   
   // API URL
   const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -83,6 +104,20 @@ export default function Home() {
   const [cvHistory, setCvHistory] = useState<any[]>([]);
   const [logs, setLogs] = useState<any[]>([]);
   const [backendStatus, setBackendStatus] = useState<"connecting" | "online" | "offline">("connecting");
+
+  // LinkedIn 模擬器 States
+  const [linkedinProfile, setLinkedinProfile] = useState<any>(null);
+  const [isEditingLinkedin, setIsEditingLinkedin] = useState(false);
+  const [editLinkedinForm, setEditLinkedinForm] = useState<any>({
+    name: "",
+    headline: "",
+    location: "",
+    about: "",
+    experiences: [],
+    educations: []
+  });
+  const [loadingLinkedin, setLoadingLinkedin] = useState(false);
+  const [savingLinkedin, setSavingLinkedin] = useState(false);
 
   // UX / UI States
   const [syncingVector, setSyncingVector] = useState(false);
@@ -134,10 +169,118 @@ export default function Home() {
         setLogs(logsData);
       }
 
+      // 5. 獲取 LinkedIn 個人資料
+      fetchLinkedinProfile();
+
     } catch (error) {
       console.error("無法連接到後端 API", error);
       setBackendStatus("offline");
     }
+  };
+
+  const fetchLinkedinProfile = async () => {
+    setLoadingLinkedin(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/linkedin`);
+      if (res.ok) {
+        const data = await res.json();
+        setLinkedinProfile(data);
+        setEditLinkedinForm({
+          name: data.name,
+          headline: data.headline,
+          location: data.location,
+          about: data.about,
+          experiences: data.experiences || [],
+          educations: data.educations || []
+        });
+      }
+    } catch (error) {
+      console.error("無法取得 LinkedIn 資料", error);
+    } finally {
+      setLoadingLinkedin(false);
+    }
+  };
+
+  const handleSaveLinkedinProfile = async () => {
+    setSavingLinkedin(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/linkedin`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: editLinkedinForm.name,
+          headline: editLinkedinForm.headline,
+          location: editLinkedinForm.location,
+          about: editLinkedinForm.about,
+          experiences: editLinkedinForm.experiences,
+          educations: editLinkedinForm.educations
+        }),
+      });
+      if (res.ok) {
+        alert("🎉 LinkedIn 個人資料儲存成功！");
+        setIsEditingLinkedin(false);
+        fetchLinkedinProfile();
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        alert(`❌ 儲存失敗: ${errData.detail || "請檢查後端日誌。"}`);
+      }
+    } catch (err) {
+      alert("❌ 無法連線至後端 API。");
+    } finally {
+      setSavingLinkedin(false);
+    }
+  };
+
+  const handleAddExperience = () => {
+    setEditLinkedinForm((prev: any) => ({
+      ...prev,
+      experiences: [
+        ...prev.experiences,
+        { company: "", title: "", location: "", start_date: "", end_date: "", description: "" }
+      ]
+    }));
+  };
+
+  const handleRemoveExperience = (index: number) => {
+    setEditLinkedinForm((prev: any) => ({
+      ...prev,
+      experiences: prev.experiences.filter((_: any, i: number) => i !== index)
+    }));
+  };
+
+  const handleExperienceChange = (index: number, field: string, value: string) => {
+    setEditLinkedinForm((prev: any) => {
+      const newExps = [...prev.experiences];
+      newExps[index] = { ...newExps[index], [field]: value };
+      return { ...prev, experiences: newExps };
+    });
+  };
+
+  const handleAddEducation = () => {
+    setEditLinkedinForm((prev: any) => ({
+      ...prev,
+      educations: [
+        ...prev.educations,
+        { school: "", degree: "", start_date: "", end_date: "" }
+      ]
+    }));
+  };
+
+  const handleRemoveEducation = (index: number) => {
+    setEditLinkedinForm((prev: any) => ({
+      ...prev,
+      educations: prev.educations.filter((_: any, i: number) => i !== index)
+    }));
+  };
+
+  const handleEducationChange = (index: number, field: string, value: string) => {
+    setEditLinkedinForm((prev: any) => {
+      const newEdus = [...prev.educations];
+      newEdus[index] = { ...newEdus[index], [field]: value };
+      return { ...prev, educations: newEdus };
+    });
   };
 
   useEffect(() => {
@@ -329,6 +472,18 @@ export default function Home() {
             >
               <Activity className="h-5 w-5" />
               <span className="font-medium text-sm">系統同步日誌</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab("linkedin")}
+              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl transition-all ${
+                activeTab === "linkedin"
+                  ? "bg-gradient-to-r from-indigo-500/20 to-[#0077b5]/15 text-[#0077b5] border border-[#0077b5]/30"
+                  : "text-gray-400 hover:text-gray-200 hover:bg-gray-800/30 border border-transparent"
+              }`}
+            >
+              <LinkedInIcon className="h-5 w-5" />
+              <span className="font-medium text-sm">LinkedIn 模擬器</span>
             </button>
           </div>
 
@@ -867,6 +1022,547 @@ export default function Home() {
                   )}
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* TAB 5: LINKEDIN SIMULATOR */}
+          {activeTab === "linkedin" && (
+            <div className="h-full flex flex-col space-y-6 overflow-y-auto pb-8 pr-2 animate-fade-in">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h2 className="text-xl font-bold text-white">LinkedIn 個人檔案模擬器</h2>
+                  <p className="text-xs text-gray-400 mt-1">模擬 LinkedIn 個人頁面排版，並能一鍵複製各區塊文字以手動更新您的 LinkedIn</p>
+                </div>
+                <button
+                  onClick={() => setIsEditingLinkedin(!isEditingLinkedin)}
+                  className={`flex items-center space-x-2 px-4 py-2 rounded-xl text-xs font-semibold border transition-all ${
+                    isEditingLinkedin
+                      ? "bg-amber-500/10 text-amber-400 border-amber-500/30 hover:bg-amber-500/20"
+                      : "bg-[#0077b5]/10 text-[#0077b5] border-[#0077b5]/30 hover:bg-[#0077b5]/20"
+                  }`}
+                >
+                  {isEditingLinkedin ? (
+                    <>
+                      <FileText className="h-4 w-4" />
+                      <span>回到預覽</span>
+                    </>
+                  ) : (
+                    <>
+                      <Edit2 className="h-4 w-4" />
+                      <span>編輯個人資料</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
+              {loadingLinkedin ? (
+                <div className="flex-1 flex items-center justify-center text-gray-400">
+                  <Loader2 className="h-8 w-8 animate-spin mr-2" />
+                  <span>正在載入個人資料...</span>
+                </div>
+              ) : !linkedinProfile ? (
+                <div className="flex-1 flex flex-col items-center justify-center text-gray-500 space-y-2">
+                  <AlertCircle className="h-8 w-8 text-red-500" />
+                  <p className="text-sm">載入失敗，無法連接到 API。</p>
+                </div>
+              ) : isEditingLinkedin ? (
+                /* ================= 編輯模式 ================= */
+                <div className="space-y-6 bg-[#0f111a]/60 border border-gray-800 rounded-2xl p-6">
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-bold text-indigo-400 border-b border-gray-800 pb-2">基本資訊</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-400 mb-1">姓名</label>
+                        <input
+                          type="text"
+                          value={editLinkedinForm.name}
+                          onChange={(e) => setEditLinkedinForm({ ...editLinkedinForm, name: e.target.value })}
+                          className="w-full bg-[#121320] border border-gray-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-gray-400 mb-1">地區</label>
+                        <input
+                          type="text"
+                          value={editLinkedinForm.location}
+                          onChange={(e) => setEditLinkedinForm({ ...editLinkedinForm, location: e.target.value })}
+                          className="w-full bg-[#121320] border border-gray-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-400 mb-1">個人標題 (Headline)</label>
+                      <input
+                        type="text"
+                        value={editLinkedinForm.headline}
+                        onChange={(e) => setEditLinkedinForm({ ...editLinkedinForm, headline: e.target.value })}
+                        className="w-full bg-[#121320] border border-gray-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-gray-400 mb-1">關於我 (About)</label>
+                      <textarea
+                        rows={4}
+                        value={editLinkedinForm.about}
+                        onChange={(e) => setEditLinkedinForm({ ...editLinkedinForm, about: e.target.value })}
+                        className="w-full bg-[#121320] border border-gray-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 font-sans"
+                      />
+                    </div>
+                  </div>
+
+                  {/* 工作經歷編輯 */}
+                  <div className="space-y-4 pt-4 border-t border-gray-800">
+                    <div className="flex justify-between items-center border-b border-gray-800 pb-2">
+                      <h3 className="text-sm font-bold text-indigo-400">工作經歷</h3>
+                      <button
+                        onClick={handleAddExperience}
+                        className="flex items-center space-x-1 text-xs text-indigo-400 hover:text-indigo-300"
+                      >
+                        <Plus className="h-4 w-4" />
+                        <span>新增經歷</span>
+                      </button>
+                    </div>
+
+                    {editLinkedinForm.experiences.map((exp: any, index: number) => (
+                      <div key={index} className="bg-[#121320]/60 border border-gray-800 rounded-xl p-4 space-y-3 relative">
+                        <button
+                          onClick={() => handleRemoveExperience(index)}
+                          className="absolute top-4 right-4 text-gray-500 hover:text-red-400 transition-colors"
+                          title="刪除此經歷"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-[11px] font-semibold text-gray-500 mb-1">公司名稱</label>
+                            <input
+                              type="text"
+                              value={exp.company}
+                              onChange={(e) => handleExperienceChange(index, "company", e.target.value)}
+                              className="w-full bg-[#121320] border border-gray-800 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-indigo-500"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[11px] font-semibold text-gray-500 mb-1">職稱</label>
+                            <input
+                              type="text"
+                              value={exp.title}
+                              onChange={(e) => handleExperienceChange(index, "title", e.target.value)}
+                              className="w-full bg-[#121320] border border-gray-800 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-indigo-500"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[11px] font-semibold text-gray-500 mb-1">期間 (例如: 2024-01 至 至今)</label>
+                            <div className="flex gap-2">
+                              <input
+                                type="text"
+                                placeholder="開始 (YYYY-MM)"
+                                value={exp.start_date}
+                                onChange={(e) => handleExperienceChange(index, "start_date", e.target.value)}
+                                className="w-1/2 bg-[#121320] border border-gray-800 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-indigo-500"
+                              />
+                              <input
+                                type="text"
+                                placeholder="結束 (YYYY-MM 或 至今)"
+                                value={exp.end_date}
+                                onChange={(e) => handleExperienceChange(index, "end_date", e.target.value)}
+                                className="w-1/2 bg-[#121320] border border-gray-800 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-indigo-500"
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <label className="block text-[11px] font-semibold text-gray-500 mb-1">地點</label>
+                            <input
+                              type="text"
+                              value={exp.location}
+                              onChange={(e) => handleExperienceChange(index, "location", e.target.value)}
+                              className="w-full bg-[#121320] border border-gray-800 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-indigo-500"
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-[11px] font-semibold text-gray-500 mb-1">工作內容描述 (支援換行)</label>
+                          <textarea
+                            rows={3}
+                            value={exp.description}
+                            onChange={(e) => handleExperienceChange(index, "description", e.target.value)}
+                            className="w-full bg-[#121320] border border-gray-800 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-indigo-500 font-sans"
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* 學歷編輯 */}
+                  <div className="space-y-4 pt-4 border-t border-gray-800">
+                    <div className="flex justify-between items-center border-b border-gray-800 pb-2">
+                      <h3 className="text-sm font-bold text-indigo-400">教育背景</h3>
+                      <button
+                        onClick={handleAddEducation}
+                        className="flex items-center space-x-1 text-xs text-indigo-400 hover:text-indigo-300"
+                      >
+                        <Plus className="h-4 w-4" />
+                        <span>新增教育</span>
+                      </button>
+                    </div>
+
+                    {editLinkedinForm.educations.map((edu: any, index: number) => (
+                      <div key={index} className="bg-[#121320]/60 border border-gray-800 rounded-xl p-4 space-y-3 relative">
+                        <button
+                          onClick={() => handleRemoveEducation(index)}
+                          className="absolute top-4 right-4 text-gray-500 hover:text-red-400 transition-colors"
+                          title="刪除此教育經歷"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                          <div>
+                            <label className="block text-[11px] font-semibold text-gray-500 mb-1">學校名稱</label>
+                            <input
+                              type="text"
+                              value={edu.school}
+                              onChange={(e) => handleEducationChange(index, "school", e.target.value)}
+                              className="w-full bg-[#121320] border border-gray-800 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-indigo-500"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[11px] font-semibold text-gray-500 mb-1">學位 / 科系</label>
+                            <input
+                              type="text"
+                              value={edu.degree}
+                              onChange={(e) => handleEducationChange(index, "degree", e.target.value)}
+                              className="w-full bg-[#121320] border border-gray-800 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-indigo-500"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-[11px] font-semibold text-gray-500 mb-1">就讀期間 (例如: 2018 至 2022)</label>
+                            <div className="flex gap-2">
+                              <input
+                                type="text"
+                                placeholder="開始年"
+                                value={edu.start_date}
+                                onChange={(e) => handleEducationChange(index, "start_date", e.target.value)}
+                                className="w-1/2 bg-[#121320] border border-gray-800 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-indigo-500"
+                              />
+                              <input
+                                type="text"
+                                placeholder="結束年"
+                                value={edu.end_date}
+                                onChange={(e) => handleEducationChange(index, "end_date", e.target.value)}
+                                className="w-1/2 bg-[#121320] border border-gray-800 rounded-lg px-2.5 py-1.5 text-xs text-white focus:outline-none focus:border-indigo-500"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="flex justify-end space-x-3 pt-4 border-t border-gray-800">
+                    <button
+                      onClick={() => setIsEditingLinkedin(false)}
+                      className="px-4 py-2 border border-gray-800 hover:bg-gray-800/40 rounded-xl text-xs text-gray-400 font-semibold"
+                    >
+                      取消
+                    </button>
+                    <button
+                      onClick={handleSaveLinkedinProfile}
+                      disabled={savingLinkedin}
+                      className="flex items-center space-x-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white px-4 py-2 rounded-xl text-xs font-semibold disabled:opacity-50"
+                    >
+                      {savingLinkedin ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <span>儲存中...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Save className="h-4 w-4" />
+                          <span>儲存修改</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                /* ================= 預覽/模擬模式 ================= */
+                <div className="space-y-6 max-w-4xl mx-auto w-full">
+                  
+                  {/* Card 1: Header / Banner */}
+                  <div className="bg-[#0f111a]/60 border border-gray-800 rounded-2xl overflow-hidden shadow-xl flex flex-col">
+                    {/* Banner */}
+                    <div className="h-32 bg-gradient-to-r from-[#0077b5] to-indigo-800 relative">
+                      <div className="absolute top-4 right-4 bg-black/30 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/10 text-[10px] text-white flex items-center space-x-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                        <span>模擬預覽中</span>
+                      </div>
+                    </div>
+                    
+                    {/* Header Details */}
+                    <div className="px-6 pb-6 pt-0 relative flex flex-col md:flex-row md:justify-between items-start md:items-end gap-4">
+                      {/* Avatar container */}
+                      <div className="-mt-16 relative z-10 w-28 h-28 rounded-full border-4 border-[#090a10] bg-[#121320] flex items-center justify-center overflow-hidden shadow-lg">
+                        <div className="w-full h-full bg-gradient-to-tr from-indigo-600/30 to-purple-500/20 flex items-center justify-center">
+                          <span className="text-3xl font-black text-indigo-400 font-mono">
+                            {linkedinProfile.name ? linkedinProfile.name.charAt(0) : "U"}
+                          </span>
+                        </div>
+                      </div>
+                      
+                      {/* Info & Headline */}
+                      <div className="flex-1 space-y-1.5">
+                        <h3 className="text-2xl font-bold text-white">{linkedinProfile.name}</h3>
+                        <p className="text-sm text-gray-200 font-medium leading-normal max-w-2xl">{linkedinProfile.headline}</p>
+                        <p className="text-xs text-gray-500">{linkedinProfile.location}</p>
+                      </div>
+
+                      {/* Headline Copy Button */}
+                      <button
+                        onClick={() => copyToClipboard(linkedinProfile.headline, "headline")}
+                        className="flex items-center space-x-1.5 bg-[#0077b5]/10 hover:bg-[#0077b5]/25 text-[#0077b5] border border-[#0077b5]/20 hover:border-[#0077b5]/40 px-3 py-1.5 rounded-xl text-xs font-bold transition-all self-stretch md:self-auto justify-center"
+                      >
+                        {copiedId === "headline" ? (
+                          <>
+                            <Check className="h-4 w-4 text-emerald-400" />
+                            <span>已複製標題</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="h-3.5 w-3.5" />
+                            <span>複製職稱標題</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Card 2: About Section */}
+                  <div className="bg-[#0f111a]/60 border border-gray-800 rounded-2xl p-6 shadow-xl space-y-4">
+                    <div className="flex justify-between items-center border-b border-gray-800/80 pb-3">
+                      <h3 className="text-base font-bold text-white">關於我 (About)</h3>
+                      <button
+                        onClick={() => copyToClipboard(linkedinProfile.about, "about")}
+                        className="flex items-center space-x-1 text-xs text-indigo-400 hover:text-indigo-300 font-semibold"
+                      >
+                        {copiedId === "about" ? (
+                          <>
+                            <Check className="h-3.5 w-3.5 text-emerald-400" />
+                            <span>已複製關於我</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="h-3.5 w-3.5" />
+                            <span>複製關於我</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                    <p className="text-sm text-gray-300 whitespace-pre-line leading-relaxed font-sans">
+                      {linkedinProfile.about}
+                    </p>
+                  </div>
+
+                  {/* Card 3: Experience Section */}
+                  <div className="bg-[#0f111a]/60 border border-gray-800 rounded-2xl p-6 shadow-xl space-y-5">
+                    <div className="flex justify-between items-center border-b border-gray-800/80 pb-3">
+                      <h3 className="text-base font-bold text-white">工作經歷 (Experience)</h3>
+                      <button
+                        onClick={() => {
+                          const expText = linkedinProfile.experiences
+                            .map((exp: any) => 
+                              `🏢 ${exp.company} - ${exp.title}\n期間：${exp.start_date} ~ ${exp.end_date} | 地區：${exp.location || "台北"}\n\n工作內容：\n${exp.description}`
+                            )
+                            .join("\n\n====================\n\n");
+                          copyToClipboard(expText, "all_experiences");
+                        }}
+                        className="flex items-center space-x-1 text-xs text-indigo-400 hover:text-indigo-300 font-semibold"
+                      >
+                        {copiedId === "all_experiences" ? (
+                          <>
+                            <Check className="h-3.5 w-3.5 text-emerald-400" />
+                            <span>已複製所有經歷</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="h-3.5 w-3.5" />
+                            <span>複製全部經歷</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+
+                    <div className="divide-y divide-gray-800/60 space-y-4">
+                      {linkedinProfile.experiences && linkedinProfile.experiences.length > 0 ? (
+                        linkedinProfile.experiences.map((exp: any, idx: number) => (
+                          <div key={idx} className={`${idx > 0 ? "pt-5" : ""} flex flex-col md:flex-row justify-between items-start gap-4`}>
+                            <div className="flex-1 space-y-2">
+                              <div>
+                                <h4 className="text-sm font-bold text-white">{exp.title}</h4>
+                                <p className="text-xs text-indigo-300 font-medium mt-0.5">{exp.company}</p>
+                                <p className="text-[11px] text-gray-500 mt-1">
+                                  <span>{exp.start_date} ~ {exp.end_date}</span>
+                                  {exp.location && (
+                                    <>
+                                      <span className="mx-2">•</span>
+                                      <span>{exp.location}</span>
+                                    </>
+                                  )}
+                                </p>
+                              </div>
+                              <p className="text-xs text-gray-300 leading-relaxed whitespace-pre-line font-sans pl-1 border-l-2 border-indigo-500/30">
+                                {exp.description}
+                              </p>
+                            </div>
+                            
+                            <button
+                              onClick={() => {
+                                const expSingleText = `🏢 ${exp.company} - ${exp.title}\n期間：${exp.start_date} ~ ${exp.end_date} | 地區：${exp.location || "台北"}\n\n工作內容：\n${exp.description}`;
+                                copyToClipboard(expSingleText, `exp_${idx}`);
+                              }}
+                              className="text-[10px] text-gray-500 hover:text-indigo-400 hover:underline flex items-center space-x-1 py-1"
+                            >
+                              {copiedId === `exp_${idx}` ? (
+                                <>
+                                  <Check className="h-3 w-3 text-emerald-400" />
+                                  <span>已複製</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Copy className="h-3 w-3" />
+                                  <span>複製此經歷</span>
+                                </>
+                              )}
+                            </button>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-sm text-gray-500 italic">尚無經歷紀錄</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Card 4: Dynamic Skills Section */}
+                  <div className="bg-[#0f111a]/60 border border-gray-800 rounded-2xl p-6 shadow-xl space-y-4">
+                    <div className="flex justify-between items-center border-b border-gray-800/80 pb-3">
+                      <div>
+                        <h3 className="text-base font-bold text-white">專業技能 (Skills)</h3>
+                        <p className="text-[11px] text-emerald-400 mt-0.5 font-medium">✨ 動態同步自技能 Wiki 卡片</p>
+                      </div>
+                      <button
+                        onClick={() => {
+                          const skillsText = "專業技能清單：\n" + linkedinProfile.skills
+                            .map((s: any) => `• ${s.name} (熟練度: ${s.proficiency}) - 核心技術: ${s.core_tech}\n  說明: ${s.description}`)
+                            .join("\n");
+                          copyToClipboard(skillsText, "all_skills");
+                        }}
+                        className="flex items-center space-x-1 text-xs text-indigo-400 hover:text-indigo-300 font-semibold"
+                      >
+                        {copiedId === "all_skills" ? (
+                          <>
+                            <Check className="h-3.5 w-3.5 text-emerald-400" />
+                            <span>已複製技能清單</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="h-3.5 w-3.5" />
+                            <span>複製技能文字</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {linkedinProfile.skills && linkedinProfile.skills.length > 0 ? (
+                        linkedinProfile.skills.map((skill: any, idx: number) => (
+                          <div key={idx} className="bg-[#121320] border border-gray-800/70 p-4 rounded-xl space-y-2 hover:border-indigo-500/20 transition-all flex flex-col justify-between">
+                            <div>
+                              <div className="flex justify-between items-start">
+                                <h4 className="text-sm font-semibold text-white">{skill.name}</h4>
+                                <span className="bg-indigo-500/10 text-indigo-400 text-[10px] px-2 py-0.5 rounded-full border border-indigo-500/20 font-bold">
+                                  {skill.proficiency}
+                                </span>
+                              </div>
+                              <p className="text-[11px] text-gray-500 mt-1 font-mono">技術標籤: {skill.core_tech || "無"}</p>
+                              <p className="text-xs text-gray-300 mt-2 font-sans line-clamp-3">
+                                {skill.description}
+                              </p>
+                            </div>
+                            
+                            <div className="pt-2 border-t border-gray-800/50 flex justify-end">
+                              <button
+                                onClick={() => {
+                                  const singleSkillText = `• ${skill.name} (${skill.proficiency})\n核心技術：${skill.core_tech}\n說明：${skill.description}`;
+                                  copyToClipboard(singleSkillText, `skill_${idx}`);
+                                }}
+                                className="text-[10px] text-gray-500 hover:text-indigo-400 hover:underline flex items-center space-x-1"
+                              >
+                                {copiedId === `skill_${idx}` ? (
+                                  <>
+                                    <Check className="h-3 w-3 text-emerald-400" />
+                                    <span>已複製</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Copy className="h-3 w-3" />
+                                    <span>複製</span>
+                                  </>
+                                )}
+                              </button>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-sm text-gray-500 italic col-span-2">尚無技能 Wiki</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Card 5: Education Section */}
+                  <div className="bg-[#0f111a]/60 border border-gray-800 rounded-2xl p-6 shadow-xl space-y-4">
+                    <div className="flex justify-between items-center border-b border-gray-800/80 pb-3">
+                      <h3 className="text-base font-bold text-white">教育背景 (Education)</h3>
+                      <button
+                        onClick={() => {
+                          const eduText = linkedinProfile.educations
+                            .map((edu: any) => `🎓 ${edu.school} - ${edu.degree} (${edu.start_date} ~ ${edu.end_date})`)
+                            .join("\n");
+                          copyToClipboard(eduText, "all_educations");
+                        }}
+                        className="flex items-center space-x-1 text-xs text-indigo-400 hover:text-indigo-300 font-semibold"
+                      >
+                        {copiedId === "all_educations" ? (
+                          <>
+                            <Check className="h-3.5 w-3.5 text-emerald-400" />
+                            <span>已複製教育背景</span>
+                          </>
+                        ) : (
+                          <>
+                            <Copy className="h-3.5 w-3.5" />
+                            <span>複製教育背景</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+
+                    <div className="space-y-4 divide-y divide-gray-800/60">
+                      {linkedinProfile.educations && linkedinProfile.educations.length > 0 ? (
+                        linkedinProfile.educations.map((edu: any, idx: number) => (
+                          <div key={idx} className={`${idx > 0 ? "pt-4" : ""} flex justify-between items-start gap-4`}>
+                            <div>
+                              <h4 className="text-sm font-bold text-white">{edu.school}</h4>
+                              <p className="text-xs text-gray-400 mt-1">{edu.degree}</p>
+                              <p className="text-[10px] text-gray-500 mt-1 font-mono">{edu.start_date} ~ {edu.end_date}</p>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-sm text-gray-500 italic">尚無教育背景紀錄</p>
+                      )}
+                    </div>
+                  </div>
+
+                </div>
+              )}
             </div>
           )}
 

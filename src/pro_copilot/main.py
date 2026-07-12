@@ -8,6 +8,7 @@ from pro_copilot.api.gitlab import router as gitlab_router
 from pro_copilot.api.voice import router as voice_router
 from pro_copilot.api.skills import router as skills_router
 from pro_copilot.api.cv import router as cv_router
+from pro_copilot.api.linkedin import router as linkedin_router
 from pro_copilot.config import settings
 from pro_copilot.scheduler import start_scheduler, stop_scheduler
 from pro_copilot.database import init_db
@@ -68,6 +69,7 @@ app.include_router(voice_router, prefix="/api/voice", tags=["Voice"])
 app.include_router(calendar_router, prefix="/api/calendar", tags=["Calendar"])
 app.include_router(skills_router, prefix="/api/skills", tags=["Skills"])
 app.include_router(cv_router, prefix="/api/cv", tags=["CV"])
+app.include_router(linkedin_router, prefix="/api/linkedin", tags=["LinkedIn"])
 
 
 @app.get("/health")

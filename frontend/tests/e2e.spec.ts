@@ -82,4 +82,18 @@ test.describe("Pro-Copilot 全功能 E2E 測試", () => {
     await expect(page.locator('h1:has-text("測試產生的履歷")')).toBeVisible();
     await expect(page.locator('strong:has-text("Python")')).toBeVisible();
   });
+
+  test("5. 驗證 LinkedIn 個人檔案模擬器與複製功能", async ({ page }) => {
+    // 切換至 LinkedIn 模擬器
+    await page.click('nav button:has-text("LinkedIn 模擬器")');
+    await expect(page.locator('h2:has-text("LinkedIn 個人檔案模擬器")')).toBeVisible();
+
+    // 驗證基本資料是否正確載入
+    await expect(page.locator('h3:has-text("杜偉宏")')).toBeVisible();
+    await expect(page.locator('p:has-text("軟體工程師")').first()).toBeVisible();
+
+    // 驗證複製按鈕是否可被點擊與狀態轉換
+    await page.click('button:has-text("複製職稱標題")');
+    await expect(page.locator('span:has-text("已複製標題")')).toBeVisible();
+  });
 });
