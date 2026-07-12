@@ -43,6 +43,22 @@ uv run pro-copilot convert
 uv run pro-copilot distill
 ```
 
+## 缺失功能探索工作流
+
+專案提供 GitHub Copilot Prompt File [`discover-missing-features`](.github/prompts/discover-missing-features.prompt.md)，用來根據現有文件、程式碼、測試與近期提交，共同發想專案尚缺少且值得優先開發的功能。
+
+### 使用方式
+
+1. 使用支援 Prompt Files 的 GitHub Copilot Chat 開啟此專案。
+2. 在聊天輸入框輸入 `/discover-missing-features`，選取對應 prompt。
+3. 補充本次想探索的範圍；若要由代理自行判斷，可直接使用：
+
+   ```text
+   盤點整個專案缺少的功能，提出候選並自行決定最優先項目，不必向我詢問問題。
+   ```
+
+工作流會依序輸出「現況摘要」、「缺口地圖」、「候選功能比較」、「推薦前三名」與「首選功能簡報」。除非另行要求，它不會直接修改 roadmap、建立 issue 或開始實作。
+
 ## 目錄結構
 
 ```
